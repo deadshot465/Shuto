@@ -1,0 +1,25 @@
+{
+  "name": "shuto",
+  "version": "1.0.0",
+  "description": "Hachiya Shuto",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deadshot465/Shuto.git"
+  },
+  "author": "Tetsuki Syu",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/deadshot465/Shuto/issues"
+  },
+  "homepage": "https://github.com/deadshot465/Shuto#readme",
+  "dependencies": {
+    "eris": "^0.15.1"
+  }
+}
