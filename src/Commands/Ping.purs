@@ -30,8 +30,8 @@ pingImpl msg _ = fromAff $ run msg
   where
     run m = do
       past <- liftEffect nowTime
-      sentMsg <- createTextMessage m $ NonEmptyString "⚾️...待ってて"
+      sentMsg <- createTextMessage m $ NonEmptyString "⚾...待ってて"
       present <- liftEffect nowTime
       let difference = (diff present past :: Milliseconds)
-      _ <- editMessage sentMsg $ NonEmptyString ("⚾️...ぽん。\nレイテンシは" <> show difference <> "だ。")
+      _ <- editMessage sentMsg $ NonEmptyString ("⚾...ぽん。\nレイテンシは" <> show difference <> "だ。")
       pure null
