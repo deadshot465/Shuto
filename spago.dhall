@@ -15,11 +15,13 @@ to generate this file without the comments in this block.
   [ "aff"
   , "aff-promise"
   , "console"
+  , "datetime"
   , "dotenv"
   , "effect"
   , "either"
   , "maybe"
   , "node-process"
+  , "now"
   , "prelude"
   , "psci-support"
   ]
