@@ -2,11 +2,12 @@ module Ping where
   
 import Prelude
 
-import Control.Promise (Promise, fromAff, toAff)
+import Control.Promise (Promise, fromAff)
+import Data.Nullable (Nullable, null)
 import Data.String.NonEmpty.Internal (NonEmptyString(..))
 import Data.Time (diff)
 import Effect (Effect)
-import Effect.Aff (Aff, Milliseconds, forkAff, joinFiber, launchAff_)
+import Effect.Aff (Milliseconds)
 import Effect.Class (liftEffect)
 import Effect.Now (nowTime)
 import Eris (DispatchableCommand, Message, createTextMessage, editMessage)
@@ -20,28 +21,17 @@ ping =
     , deleteCommand: false
     , description: "八谷にレイテンシを問う。"
     , fullDescription: "八谷にレイテンシを問う。"
+    , errorMessage: "エラー！"
     }
   }
 
-pingImpl :: Message -> Array String -> Effect Unit
-pingImpl msg _ = launchAff_ do
-  past <- liftEffect nowTime
-  sentMsg <- createTextMessage msg $ NonEmptyString "⚾️...待ってて"
-  --sentFiber <- forkAff $ promise
-  --sentMsg <- joinFiber sentFiber
-  present <- liftEffect nowTime
-  let difference = (diff present past :: Milliseconds)
-  _ <- editMessage sentMsg $ NonEmptyString ("⚾️...ぽん。\nレイテンシは" <> show difference <> "だ。")
-  pure unit
-
-{- pingImpl :: ∀ a. Message -> Array a -> Aff Unit
-pingImpl msg _ = liftEffect $ launchAff_ do
-  sentFiber <- forkAff $ toAff $ _createTextMessage msg "⚾️...待ってて"
-  past <- liftEffect nowTime
-  sentMsg <- joinFiber sentFiber
-  present <- liftEffect nowTime
-  let difference = (diff present past :: Milliseconds)
-  toAff $ _editMessage sentMsg $ "⚾️...ぽん。\nレイテンシは" <> show difference <> "だ。" -}
-
-{- pingGenerator :: ∀ a. Message -> Array a -> Effect (Promise Unit)
-pingGenerator msg = fromAff <<< pingImpl msg -}
+pingImpl :: Message -> Array String -> Effect (Promise (Nullable Unit))
+pingImpl msg _ = fromAff $ run msg
+  where
+    run m = do
+      past <- liftEffect nowTime
+      sentMsg <- createTextMessage m $ NonEmptyString "⚾️...待ってて"
+      present <- liftEffect nowTime
+      let difference = (diff present past :: Milliseconds)
+      _ <- editMessage sentMsg $ NonEmptyString ("⚾️...ぽん。\nレイテンシは" <> show difference <> "だ。")
+      pure null

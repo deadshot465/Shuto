@@ -22,6 +22,7 @@ to generate this file without the comments in this block.
   , "maybe"
   , "node-process"
   , "now"
+  , "nullable"
   , "prelude"
   , "psci-support"
   , "strings"
