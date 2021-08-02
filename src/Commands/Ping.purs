@@ -3,12 +3,13 @@ module Ping where
 import Prelude
 
 import Control.Promise (Promise, fromAff, toAff)
+import Data.String.NonEmpty.Internal (NonEmptyString(..))
 import Data.Time (diff)
 import Effect (Effect)
 import Effect.Aff (Aff, Milliseconds, forkAff, joinFiber, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Now (nowTime)
-import Eris (DispatchableCommand, Message, _createTextMessage, _editMessage)
+import Eris (DispatchableCommand, Message, createTextMessage, editMessage)
 
 ping :: DispatchableCommand
 ping = 
@@ -24,14 +25,14 @@ ping =
 
 pingImpl :: Message -> Array String -> Effect Unit
 pingImpl msg _ = launchAff_ do
-  promise <- liftEffect $ _createTextMessage msg "⚾️...待ってて"
-  sentFiber <- forkAff $ toAff $ promise
   past <- liftEffect nowTime
-  sentMsg <- joinFiber sentFiber
+  sentMsg <- createTextMessage msg $ NonEmptyString "⚾️...待ってて"
+  --sentFiber <- forkAff $ promise
+  --sentMsg <- joinFiber sentFiber
   present <- liftEffect nowTime
   let difference = (diff present past :: Milliseconds)
-  promise' <- liftEffect $ _editMessage sentMsg $ "⚾️...ぽん。\nレイテンシは" <> show difference <> "だ。"
-  toAff promise'
+  _ <- editMessage sentMsg $ NonEmptyString ("⚾️...ぽん。\nレイテンシは" <> show difference <> "だ。")
+  pure unit
 
 {- pingImpl :: ∀ a. Message -> Array a -> Aff Unit
 pingImpl msg _ = liftEffect $ launchAff_ do

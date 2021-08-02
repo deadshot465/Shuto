@@ -10,7 +10,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (error)
-import Eris (DispatchableCommand, _connectClient, _registerCommands, initializeClient)
+import Eris (DispatchableCommand, connectClient, _registerCommands, initializeClient)
 import Ping (ping)
 
 commands :: Array DispatchableCommand
@@ -22,9 +22,9 @@ main = launchAff_ do
   result <- liftEffect $ initializeClient
   case result of
     Left err -> error err
-    Right c -> liftEffect $ do
-      client <- c
-      _ <- _registerCommands client commands
-      _ <- _connectClient client
+    Right c -> do
+      client <- liftEffect c
+      _ <- liftEffect $ _registerCommands client commands
+      _ <- connectClient client
       pure unit
 

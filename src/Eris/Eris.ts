@@ -1,4 +1,4 @@
-import { CommandClient, ClientOptions, Message, PossiblyUncachedTextableChannel, TextableChannel, TextChannel, CommandGenerator, CommandOptions } from 'eris';
+import { CommandClient, ClientOptions, Message, PossiblyUncachedTextableChannel, TextableChannel, TextChannel, CommandGenerator, CommandOptions, AdvancedMessageContent } from 'eris';
 
 interface DispatchableCommand {
     label: string,
@@ -29,7 +29,7 @@ export const _onMessageCreate = (client: CommandClient) => (callback: (msg: Mess
 };
 
 export const _createTextMessage = (msg: Message<TextableChannel>) => (content: string) => () => {
-    return msg.channel.createMessage(content);
+    return msg.channel.createMessage({ content: content } as AdvancedMessageContent);
 };
 
 export const _editMessage = (msg: Message<TextChannel>) => (content: string) => () => {
