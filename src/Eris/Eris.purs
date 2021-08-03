@@ -1,6 +1,9 @@
 module Eris
-  ( _onMessageCreate
+  ( _editStatus
+  , _onMessageCreate
+  , _onReady
   , _registerCommands
+  , ActivityName
   , Command
   , CommandClient
   , CommandOptions
@@ -32,16 +35,21 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Node.Process (lookupEnv)
   
-foreign import _makeClient :: String -> ClientOptions -> CommandClientOptions -> Effect CommandClient
+foreign import _makeClient :: Token -> ClientOptions -> CommandClientOptions -> Effect CommandClient
 foreign import _connectClient :: CommandClient -> Effect (Promise Unit)
 foreign import _onMessageCreate :: CommandClient -> (Message -> Effect Unit) -> Effect CommandClient
+foreign import _onReady :: CommandClient -> Effect Unit -> Effect CommandClient
 foreign import _createTextMessage :: Message -> NonEmptyString -> Effect (Promise Message)
 foreign import _createEmbed :: Message -> Embed -> Effect (Promise Message)
 foreign import _editMessage :: Message -> NonEmptyString -> Effect (Promise Message)
+foreign import _editStatus :: CommandClient -> ActivityName -> Effect Unit
 foreign import _registerCommands :: CommandClient -> Array DispatchableCommand -> Effect Unit
 
 foreign import data CommandClient :: Type
 foreign import data Command :: Type
+
+type Token = String
+type ActivityName = String
 
 type User = 
   { bot :: Boolean
@@ -128,7 +136,7 @@ editMessage msg str = do
   p <- liftEffect $ _editMessage msg str
   toAff p
 
-makeClient :: String -> ClientOptions -> CommandClientOptions -> Effect CommandClient
+makeClient :: Token -> ClientOptions -> CommandClientOptions -> Effect CommandClient
 makeClient token clientOptions commandClientOptions = _makeClient token clientOptions commandClientOptions
 
 defaultPrefix :: String

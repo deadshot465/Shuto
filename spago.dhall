@@ -14,6 +14,7 @@ to generate this file without the comments in this block.
 , dependencies =
   [ "aff"
   , "aff-promise"
+  , "arrays"
   , "console"
   , "datetime"
   , "dotenv"
@@ -25,7 +26,9 @@ to generate this file without the comments in this block.
   , "nullable"
   , "prelude"
   , "psci-support"
+  , "random"
   , "strings"
+  , "tailrec"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

@@ -16,6 +16,9 @@ presences :: Array String
 presences = 
   [ "野球"
   , "寝る"
+  , "雀さんとデート"
+  , "雀さんとお祭り"
+  , "雀さんと家に帰る"
   ]
 
 shutoPicture :: String

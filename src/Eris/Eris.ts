@@ -28,6 +28,10 @@ export const _onMessageCreate = (client: CommandClient) => (callback: (msg: Mess
     });
 };
 
+export const _onReady = (client: CommandClient) => (callback: () => void) => () => {
+    return client.on('ready', () => callback());
+};
+
 export const _createTextMessage = (msg: Message<TextableChannel>) => (content: string) => () => {
     return msg.channel.createMessage(content).catch(reason => console.error(reason));
 };
@@ -38,6 +42,13 @@ export const _createEmbed = (msg: Message<TextableChannel>) => (embed: EmbedOpti
 
 export const _editMessage = (msg: Message<TextChannel>) => (content: string) => () => {
     return msg.edit(content);
+};
+
+export const _editStatus = (client: CommandClient) => (name: string) => () => {
+    return client.editStatus('online', {
+        name: name,
+        type: 0
+    });
 };
 
 export const _registerCommands = (client: CommandClient) => (cmds: Array<DispatchableCommand>) => () => {
