@@ -1,14 +1,22 @@
 module Eris
-  ( Command
-  , connectClient
-  , createTextMessage
-  , editMessage
-  , _onMessageCreate
+  ( _onMessageCreate
   , _registerCommands
+  , Command
   , CommandClient
   , CommandOptions
+  , connectClient
+  , createEmbed
+  , createTextMessage
   , DispatchableCommand
+  , editMessage
+  , Embed
+  , EmbedAuthor
+  , EmbedField
+  , EmbedFooter
+  , EmbedImage
+  , EmbedThumbnail
   , initializeClient
+  , makeEmptyEmbed 
   , Message
   , User) where
 
@@ -17,7 +25,7 @@ import Prelude
 import Control.Promise (Promise, toAff)
 import Data.Either (Either(..), note)
 import Data.Maybe (fromMaybe)
-import Data.Nullable (Nullable)
+import Data.Nullable (Nullable, null)
 import Data.String.NonEmpty (NonEmptyString)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -28,6 +36,7 @@ foreign import _makeClient :: String -> ClientOptions -> CommandClientOptions ->
 foreign import _connectClient :: CommandClient -> Effect (Promise Unit)
 foreign import _onMessageCreate :: CommandClient -> (Message -> Effect Unit) -> Effect CommandClient
 foreign import _createTextMessage :: Message -> NonEmptyString -> Effect (Promise Message)
+foreign import _createEmbed :: Message -> Embed -> Effect (Promise Message)
 foreign import _editMessage :: Message -> NonEmptyString -> Effect (Promise Message)
 foreign import _registerCommands :: CommandClient -> Array DispatchableCommand -> Effect Unit
 
@@ -41,6 +50,36 @@ type User =
 type Message =
   { author :: User
   }
+
+type Embed =
+  { author :: Nullable EmbedAuthor
+  , color :: Nullable Int
+  , description :: Nullable String
+  , fields :: Nullable (Array EmbedField)
+  , footer :: Nullable EmbedFooter
+  , image :: Nullable EmbedImage
+  , thumbnail :: Nullable EmbedThumbnail
+  , title :: Nullable String
+  , url :: Nullable String
+  }
+
+type EmbedAuthor =
+  { name :: String
+  , url :: Nullable String
+  , icon_url :: Nullable String
+  }
+
+type EmbedField =
+  { name :: String
+  , value :: String
+  , inline :: Nullable Boolean
+  }
+
+type EmbedFooter = { text :: String }
+
+type EmbedImage = { url :: String }
+
+type EmbedThumbnail = { url :: String }
 
 type ClientOptions =
   { defaultImageFormat :: String
@@ -79,6 +118,11 @@ createTextMessage msg str = do
   p <- liftEffect $ _createTextMessage msg str
   toAff p
 
+createEmbed :: Message -> Embed -> Aff Message
+createEmbed msg embed = do
+  p <- liftEffect $ _createEmbed msg embed
+  toAff p
+
 editMessage :: Message -> NonEmptyString -> Aff Message
 editMessage msg str = do
   p <- liftEffect $ _editMessage msg str
@@ -89,6 +133,19 @@ makeClient token clientOptions commandClientOptions = _makeClient token clientOp
 
 defaultPrefix :: String
 defaultPrefix = "sh?"
+
+makeEmptyEmbed :: Embed
+makeEmptyEmbed =
+  { author: null
+  , color: null
+  , description: null
+  , fields: null
+  , footer: null
+  , image: null
+  , thumbnail: null
+  , title: null
+  , url: null
+  }
 
 initializeClient :: Effect (Either String (Effect CommandClient))
 initializeClient = do

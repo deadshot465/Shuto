@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 
+import About (about)
 import Data.Either (Either(..))
 import Dotenv (loadFile) as Dotenv
 import Effect (Effect)
@@ -12,7 +13,7 @@ import Eris (DispatchableCommand, Message, _onMessageCreate, _registerCommands, 
 import Ping (ping)
 
 commands :: Array DispatchableCommand
-commands = [ping]
+commands = [ping, about]
 
 messageCreate :: Message -> Effect Unit
 messageCreate msg = pure unit

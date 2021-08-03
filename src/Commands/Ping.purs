@@ -1,4 +1,4 @@
-module Ping where
+module Ping (ping) where
   
 import Prelude
 
@@ -7,7 +7,7 @@ import Data.Nullable (Nullable, null)
 import Data.String.NonEmpty.Internal (NonEmptyString(..))
 import Data.Time (diff)
 import Effect (Effect)
-import Effect.Aff (Milliseconds)
+import Effect.Aff (Milliseconds(..))
 import Effect.Class (liftEffect)
 import Effect.Now (nowTime)
 import Eris (DispatchableCommand, Message, createTextMessage, editMessage)
@@ -19,8 +19,8 @@ ping =
   , options:
     { aliases: []
     , deleteCommand: false
-    , description: "八谷にレイテンシを問う。"
-    , fullDescription: "八谷にレイテンシを問う。"
+    , description: description
+    , fullDescription: fullDescription
     , errorMessage: "エラー！"
     }
   }
@@ -32,6 +32,12 @@ pingImpl msg _ = fromAff $ run msg
       past <- liftEffect nowTime
       sentMsg <- createTextMessage m $ NonEmptyString "⚾...待ってて"
       present <- liftEffect nowTime
-      let difference = (diff present past :: Milliseconds)
-      _ <- editMessage sentMsg $ NonEmptyString ("⚾...ぽん。\nレイテンシは" <> show difference <> "だ。")
+      let (Milliseconds milli) = (diff present past :: Milliseconds)
+      _ <- editMessage sentMsg $ NonEmptyString ("⚾...ぽん。\nレイテンシは" <> show milli <> "ミリ秒だ。")
       pure null
+
+description :: String
+description = "八谷にレイテンシを問う。"
+
+fullDescription :: String
+fullDescription = "八谷にレイテンシを問う。"
