@@ -53,5 +53,16 @@ export const _editStatus = (client: CommandClient) => (name: string) => () => {
 
 export const _registerCommands = (client: CommandClient) => (cmds: Array<DispatchableCommand>) => () => {
     cmds.forEach(cmd => client.registerCommand(cmd.label, uncurryGenerator(cmd.generator), cmd.options));
-    return;
+};
+
+export const _getTextChannel = (client: CommandClient) => (channelID: string) => () => {
+    return client.getChannel(channelID);
+}
+
+export const _createChannelTextMessage = (channel: TextChannel) => (content: string) => () => {
+    return channel.createMessage(content);
+};
+
+export const _createChannelEmbed = (channel: TextChannel) => (embed: EmbedOptions) => () => {
+    return channel.createMessage({ embed: embed });
 };

@@ -14,14 +14,20 @@ to generate this file without the comments in this block.
 , dependencies =
   [ "aff"
   , "aff-promise"
+  , "argonaut"
+  , "argonaut-codecs"
   , "arrays"
   , "console"
   , "datetime"
   , "dotenv"
   , "effect"
   , "either"
+  , "foreign-generic"
+  , "lists"
   , "maybe"
+  , "node-buffer"
   , "node-process"
+  , "node-streams"
   , "now"
   , "nullable"
   , "prelude"
@@ -29,6 +35,7 @@ to generate this file without the comments in this block.
   , "random"
   , "strings"
   , "tailrec"
+  , "transformers"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

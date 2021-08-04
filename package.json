@@ -20,6 +20,10 @@
   },
   "homepage": "https://github.com/deadshot465/Shuto#readme",
   "dependencies": {
-    "eris": "^0.15.1"
+    "eris": "^0.15.1",
+    "needle": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/needle": "^2.5.2"
   }
 }

@@ -38,7 +38,7 @@ aboutEmbed :: Embed
 aboutEmbed = makeEmptyEmbed
   { author = notNull $ { name: "八谷鷲人", url: null, icon_url: notNull shutoPicture }
   , description = notNull $ "浅春観測の八谷鷲人。\n八谷鷲人はマンガ「浅春観測」の主人公の一人です。\n鷲人バージョン" <> versionNumber <> "の開発者：\n**Tetsuki Syu#1250**\n制作言語・フレームワーク：[PureScript](https://www.purescript.org/)と[Eris](https://abal.moe/Eris)ライブラリ。"
-  , footer = notNull $ { text: "鷲人ボット：リリース" <> versionNumber <> " | " <> updateDate }
+  , footer = notNull $ { text: "鷲人ボット：リリース" <> versionNumber <> " | " <> updateDate, icon_url: null }
   , color = notNull shutoColor
   , thumbnail = notNull $ { url: pureScriptLogo }
   }

@@ -16,6 +16,7 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console (error)
 import Eris (CommandClient, DispatchableCommand, Message, _editStatus, _onMessageCreate, _onReady, _registerCommands, connectClient, initializeClient)
 import Ping (ping)
+import TwitterStream (startStream)
 import Utility (randomAff)
 
 commands :: Array DispatchableCommand
@@ -45,5 +46,6 @@ main = launchAff_ do
       _ <- liftEffect $ _registerCommands client commands
       _ <- liftEffect $ ready client
       _ <- liftEffect $ _onMessageCreate client messageCreate
+      _ <- liftEffect $ startStream client
       _ <- connectClient client
       pure unit
