@@ -6,7 +6,7 @@ interface DispatchableCommand {
     options: CommandOptions
 }
 
-type CurriedGenerator = (msg: Message<TextableChannel>) => (args: Array<String>) => () => void;
+type CurriedGenerator = (msg: Message<TextableChannel>) => (args: Array<string>) => () => void;
 
 const uncurryGenerator = (generator: CurriedGenerator): CommandGenerator => {
     return async (msg, args) => generator(msg)(args)();
