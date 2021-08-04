@@ -8,20 +8,22 @@ import Data.Argonaut.Decode.Decoders (decodeJObject)
 import Data.Array ((!!))
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Show.Generic (genericShow)
 import Data.String.CodeUnits (length)
 import Effect (Effect)
-import Effect.Aff (Aff, forkAff, launchAff_)
+import Effect.Aff (Aff, Error, Fiber, Milliseconds(..), delay, error, forkAff, killFiber, launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Class.Console (error)
+import Effect.Class.Console (error) as Console
 import Eris (CommandClient, Embed, _getTextChannel, createChannelEmbed, makeEmptyEmbed)
+import Math (pow)
 import Needle (twitterStreamConnect)
 import Node.Buffer (Buffer, toString)
 import Node.Encoding (Encoding(..))
 import Node.Process (lookupEnv)
-import Node.Stream (onData)
+import Node.Stream (onData, onError)
 
 newtype Data = Data { text :: String }
 derive instance Generic Data _
@@ -113,6 +115,9 @@ animeMangaChannelId = "763568486441418774"
 userTwitterUrl :: String -> String
 userTwitterUrl = append "https://twitter.com/"
 
+defaultRetryAttempt :: Int
+defaultRetryAttempt = 0
+
 twitterLogo :: String
 twitterLogo = "https://cdn.discordapp.com/attachments/811517007446671391/872399108466409472/apple-touch-icon-192x192.png"
 
@@ -153,22 +158,30 @@ handleBufferData buffer client = do
   if length s < 10 then pure unit
   else do
     case jsonParser s of
-      Left err -> error $ "Failed to parse string to Json: " <> err
+      Left err -> Console.error $ "Failed to parse string to Json: " <> err
       Right json -> case (decodeJson json :: _ StreamResponse) of
-        Left err -> error $ printJsonDecodeError err
+        Left err -> Console.error $ printJsonDecodeError err
         Right response -> do
           embed <- buildEmbed response
           launchAff_  $ sendEmbed client embed
 
-getStreamData :: String -> CommandClient -> Aff Unit
-getStreamData token client = do
+handleError :: Error -> Int -> Fiber Unit -> String -> CommandClient -> Effect Unit
+handleError err retryAttempt dataFiber token client = launchAff_ do
+  Console.error $ "An error occurred: " <> show err <> "\nRetrying...\n"
+  killFiber (error "Streaming fiber terminated due to an error.") dataFiber
+  delay $ Milliseconds $ pow 2.0 (toNumber retryAttempt)
+  getStreamData token client (retryAttempt + 1)
+
+getStreamData :: String -> CommandClient -> Int -> Aff Unit
+getStreamData token client retryAttempt = do
   stream <- twitterStreamConnect token url timeout
-  _ <- forkAff $ liftEffect $ onData stream (\b -> handleBufferData b client)
+  dataFiber <- forkAff $ liftEffect $ onData stream (\b -> handleBufferData b client)
+  _ <- forkAff $ liftEffect $ onError stream (\e -> handleError e retryAttempt dataFiber token client)
   pure unit
 
 startStream :: CommandClient -> Effect Unit
 startStream client = do
   envResult <- lookupEnv "TWITTER_BEARER_TOKEN"
   case envResult of
-    Nothing -> error "TWITTER_BEARER_TOKEN is empty."
-    Just token -> launchAff_ $ getStreamData token client
+    Nothing -> Console.error "TWITTER_BEARER_TOKEN is empty."
+    Just token -> launchAff_ $ getStreamData token client defaultRetryAttempt
