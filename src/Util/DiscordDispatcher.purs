@@ -9,7 +9,7 @@ import Affjax.RequestBody as RequestBody
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat as ResponseFormat
 import Constants (TokenType, getChannelId, getColor, getToken)
-import Data.Argonaut (encodeJson)
+import Data.Argonaut (class EncodeJson, encodeJson)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
@@ -84,6 +84,9 @@ sanitizeEmbed embed =
   , timestamp: toMaybe embed.timestamp
   }
 
+buildRequestBody :: ∀ a. EncodeJson a => a -> RequestBody
+buildRequestBody embed = RequestBody.Json $ encodeJson { embeds: [ embed ] }
+
 buildRequest :: String -> Maybe RequestBody -> String -> Request String
 buildRequest channelId content token = defaultRequest
   { url = createMessageEndpoint channelId
@@ -98,7 +101,7 @@ dispatchEmbed tokenType embed = do
   token <- liftEffect $ getToken tokenType
   let channelId = getChannelId tokenType
   let color = getColor tokenType
-  result <- bimap Affjax.printError (const unit) <$> (Affjax.request $ buildRequest channelId (Just $ RequestBody.Json $ encodeJson $ sanitizeEmbed (embed { color = notNull color })) token)
+  result <- bimap Affjax.printError (const unit) <$> (Affjax.request $ buildRequest channelId (Just $ buildRequestBody $ sanitizeEmbed (embed { color = notNull color })) token)
   case result of
     Left e -> log e
     Right _ -> pure unit
