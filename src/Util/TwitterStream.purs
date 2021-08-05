@@ -2,7 +2,7 @@ module TwitterStream (startStream) where
   
 import Prelude
 
-import Constants (shutoColor)
+import Constants (TokenType(..), bakugoColor, shutoColor)
 import Data.Argonaut (class DecodeJson, decodeJson, jsonParser, printJsonDecodeError, (.:), (.:?))
 import Data.Argonaut.Decode.Decoders (decodeJObject)
 import Data.Array ((!!))
@@ -13,6 +13,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Show.Generic (genericShow)
 import Data.String.CodeUnits (length)
+import DiscordDispatcher (dispatchEmbed)
 import Effect (Effect)
 import Effect.Aff (Aff, Error, Fiber, Milliseconds(..), delay, error, forkAff, killFiber, launchAff_)
 import Effect.Class (liftEffect)
@@ -87,9 +88,27 @@ instance DecodeJson Includes where
 instance Show Includes where
   show = genericShow
 
+newtype MatchedItem = MatchedItem
+  { id :: String
+  , tag :: String
+  }
+
+derive instance Generic MatchedItem _
+
+instance DecodeJson MatchedItem where
+  decodeJson json = do
+    o <- decodeJObject json
+    id <- o .: "id"
+    tag <- o .: "tag"
+    pure $ MatchedItem { id, tag }
+
+instance Show MatchedItem where
+  show = genericShow
+
 newtype StreamResponse = StreamResponse
   { data :: Data
   , includes :: Includes
+  , matching_rules :: Array MatchedItem
   }
 derive instance Generic StreamResponse _
 
@@ -98,7 +117,8 @@ instance DecodeJson StreamResponse where
     o <- decodeJObject json
     d <- o .: "data"
     includes <- o .: "includes"
-    pure $ StreamResponse { data: d, includes }
+    matching_rules <- o .: "matching_rules"
+    pure $ StreamResponse { data: d, includes, matching_rules }
 
 instance Show StreamResponse where
   show = genericShow
@@ -152,6 +172,13 @@ sendEmbed client embed = do
   _ <- createChannelEmbed channel embed
   pure unit
 
+getDispatcher :: StreamResponse -> CommandClient -> Embed -> Aff Unit
+getDispatcher (StreamResponse { matching_rules: [ (MatchedItem { id }) ] }) client embed =
+  case id of
+    "1423324161796034561" -> dispatchEmbed Bakugo (embed { color = notNull bakugoColor })
+    _ -> sendEmbed client embed
+getDispatcher _ client embed = sendEmbed client embed
+
 handleBufferData :: Buffer -> CommandClient -> Effect Unit
 handleBufferData buffer client = do
   s <- toString UTF8 buffer
@@ -163,7 +190,7 @@ handleBufferData buffer client = do
         Left err -> Console.error $ printJsonDecodeError err
         Right response -> do
           embed <- buildEmbed response
-          launchAff_  $ sendEmbed client embed
+          launchAff_  $ getDispatcher response client embed
 
 handleError :: Error -> Int -> Fiber Unit -> String -> CommandClient -> Effect Unit
 handleError err retryAttempt dataFiber token client = launchAff_ do
