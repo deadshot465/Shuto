@@ -58,7 +58,7 @@ instance Show User where
 
 newtype MediaItem = MediaItem
   { type :: String
-  , url :: String
+  , url :: Maybe String
   }
 derive instance Generic MediaItem _
 
@@ -66,7 +66,7 @@ instance DecodeJson MediaItem where
   decodeJson json = do
     o <- decodeJObject json
     t <- o .: "type"
-    u <- o .: "url"
+    u <- o .:? "url"
     pure $ MediaItem { type: t, url: u }
 
 instance Show MediaItem where
@@ -98,9 +98,9 @@ derive instance Generic MatchedItem _
 instance DecodeJson MatchedItem where
   decodeJson json = do
     o <- decodeJObject json
-    id <- o .: "id"
+    (id :: Number) <- o .: "id"
     tag <- o .: "tag"
-    pure $ MatchedItem { id, tag }
+    pure $ MatchedItem { id: show id, tag }
 
 instance Show MatchedItem where
   show = genericShow
@@ -158,7 +158,10 @@ checkImage media embed = case media of
   Nothing -> embed
   Just e -> case e !! 0 of
     Nothing -> embed
-    Just (MediaItem { type: t, url: u }) -> if t == "photo" then embed { image = notNull $ { url: u } } else embed
+    Just (MediaItem { type: t, url: u }) -> if t == "photo" then
+                                              case u of
+                                                Nothing -> embed
+                                                Just u' -> embed { image = notNull $ { url: u' } } else embed
 
 buildEmbed :: StreamResponse -> Effect Embed
 buildEmbed (StreamResponse { data: Data { text }, includes: Includes { media, users } }) = do
@@ -187,7 +190,9 @@ handleBufferData buffer client = do
     case jsonParser s of
       Left err -> Console.error $ "Failed to parse string to Json: " <> err
       Right json -> case (decodeJson json :: _ StreamResponse) of
-        Left err -> Console.error $ printJsonDecodeError err
+        Left err -> do
+          Console.error s
+          Console.error $ printJsonDecodeError err
         Right response -> do
           embed <- buildEmbed response
           launchAff_  $ getDispatcher response client embed

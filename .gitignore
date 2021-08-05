@@ -11,3 +11,4 @@
 .env
 **/*/*.js
 **/*/*.js.map
+error.txt
