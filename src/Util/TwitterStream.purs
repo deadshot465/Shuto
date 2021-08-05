@@ -2,7 +2,7 @@ module TwitterStream (startStream) where
   
 import Prelude
 
-import Constants (TokenType(..), getChannelId, getColor)
+import Constants (TokenType(..), getChannelId, getColor, getStreamId)
 import Data.Argonaut (class DecodeJson, decodeJson, jsonParser, printJsonDecodeError, (.:), (.:?))
 import Data.Argonaut.Decode.Decoders (decodeJObject)
 import Data.Array ((!!))
@@ -208,8 +208,8 @@ getDispatcher tokenType client embed =
 getTokenType :: StreamResponse -> Effect TokenType
 getTokenType (StreamResponse { matching_rules: [ (MatchedItem { id }) ] }) = do 
   case id of
-    "1423324161796034561" -> pure Bakugo
-    _ -> pure Shuto
+    x | x == getStreamId Bakugo -> pure Bakugo
+      | otherwise -> pure Shuto
 getTokenType _ = pure Shuto
 
 handleBufferData :: Buffer -> CommandClient -> Effect Unit
