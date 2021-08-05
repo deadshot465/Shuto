@@ -18,7 +18,7 @@ import Data.MediaType (MediaType(..))
 import Data.Nullable (notNull, toMaybe)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Effect.Class.Console (log)
+import Effect.Class.Console (error)
 import Eris (EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedThumbnail, Embed)
 
 type SanitizedEmbedAuthor =
@@ -91,17 +91,22 @@ buildRequest :: String -> Maybe RequestBody -> String -> Request String
 buildRequest channelId content token = defaultRequest
   { url = createMessageEndpoint channelId
   , content = content
-  , headers = [ (ContentType $ MediaType "application/json"), (RequestHeader "Authorization" ("Bot " <> token)) ]
+  , headers = [ (ContentType $ MediaType "application/json"), (RequestHeader "Authorization" ("Bot " <> token)), (RequestHeader "User-Agent" "DiscordBot ($url, $versionNumber)") ]
   , method = Left POST
   , responseFormat = ResponseFormat.string
   }
 
 dispatchEmbed :: TokenType -> Embed -> Aff Unit
 dispatchEmbed tokenType embed = do
-  token <- liftEffect $ getToken tokenType
-  let channelId = getChannelId tokenType
-  let color = getColor tokenType
-  result <- bimap Affjax.printError (const unit) <$> (Affjax.request $ buildRequest channelId (Just $ buildRequestBody $ sanitizeEmbed (embed { color = notNull color })) token)
-  case result of
-    Left e -> log e
-    Right _ -> pure unit
+  token <- liftEffect $ getToken tokenType (show tokenType <> "'s token is empty.")
+  case token of
+    Left err -> error err
+    Right t -> do
+      let channelId = getChannelId tokenType
+      let color = getColor tokenType
+      result <- bimap Affjax.printError identity <$> (Affjax.request $ buildRequest channelId (Just $ buildRequestBody $ sanitizeEmbed (embed { color = notNull color })) t)
+      case result of
+        Left e -> error e
+        Right _ ->
+          --log $ show s.status <> ": " <> s.statusText <> "\nbody: " <> s.body
+          pure unit

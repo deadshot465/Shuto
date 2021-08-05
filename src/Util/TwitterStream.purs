@@ -2,7 +2,7 @@ module TwitterStream (startStream) where
   
 import Prelude
 
-import Constants (TokenType(..), bakugoColor, shutoColor)
+import Constants (TokenType(..), getChannelId, getColor)
 import Data.Argonaut (class DecodeJson, decodeJson, jsonParser, printJsonDecodeError, (.:), (.:?))
 import Data.Argonaut.Decode.Decoders (decodeJObject)
 import Data.Array ((!!))
@@ -12,6 +12,7 @@ import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull, null)
 import Data.Show.Generic (genericShow)
+import Data.String (Pattern(..), Replacement(..), replace)
 import Data.String.CodeUnits (length)
 import DiscordDispatcher (dispatchEmbed)
 import Effect (Effect)
@@ -98,9 +99,9 @@ derive instance Generic MatchedItem _
 instance DecodeJson MatchedItem where
   decodeJson json = do
     o <- decodeJObject json
-    (id :: Number) <- o .: "id"
+    id <- o .: "id"
     tag <- o .: "tag"
-    pure $ MatchedItem { id: show id, tag }
+    pure $ MatchedItem { id, tag }
 
 instance Show MatchedItem where
   show = genericShow
@@ -129,9 +130,6 @@ url = "https://api.twitter.com/2/tweets/search/stream?media.fields=preview_image
 timeout :: Int
 timeout = 20000
 
-animeMangaChannelId :: String
-animeMangaChannelId = "763568486441418774"
-
 userTwitterUrl :: String -> String
 userTwitterUrl = append "https://twitter.com/"
 
@@ -141,6 +139,22 @@ defaultRetryAttempt = 0
 twitterLogo :: String
 twitterLogo = "https://cdn.discordapp.com/attachments/811517007446671391/872399108466409472/apple-touch-icon-192x192.png"
 
+-- A hacky way to deal with Twitter returns an int64.
+matchingRuleStringStart :: String
+matchingRuleStringStart = "\"matching_rules\":[{\"id\":"
+
+matchingRuleStringEnd :: String
+matchingRuleStringEnd = ",\"tag\":"
+
+hackJsonStringStart :: String -> String
+hackJsonStringStart = replace (Pattern matchingRuleStringStart) (Replacement $ matchingRuleStringStart <> "\"")
+
+hackJsonStringEnd :: String -> String
+hackJsonStringEnd = replace (Pattern matchingRuleStringEnd) (Replacement $ "\"" <> matchingRuleStringEnd)
+
+hackJsonString :: String -> String
+hackJsonString = hackJsonStringEnd <<< hackJsonStringStart
+
 baseEmbed :: Maybe User -> String -> Effect Embed
 baseEmbed user text = do
   let author = case user of
@@ -148,43 +162,59 @@ baseEmbed user text = do
         Just (User { name, profile_image_url, username }) -> notNull $ { name, icon_url: notNull profile_image_url, url: notNull $ userTwitterUrl username }
   pure $ makeEmptyEmbed
     { author = author
-    , color = notNull shutoColor
+    , color = notNull $ getColor Shuto
     , description = notNull text
     , footer = notNull $ { text: "Twitterを経由", icon_url: notNull twitterLogo }
     }
 
-checkImage :: Maybe (Array MediaItem) -> Embed -> Embed
-checkImage media embed = case media of
-  Nothing -> embed
-  Just e -> case e !! 0 of
-    Nothing -> embed
-    Just (MediaItem { type: t, url: u }) -> if t == "photo" then
-                                              case u of
-                                                Nothing -> embed
-                                                Just u' -> embed { image = notNull $ { url: u' } } else embed
+ignoreOrNot :: String -> Maybe String -> TokenType -> Embed -> Maybe Embed
+ignoreOrNot t u tokenType embed =
+  if t == "photo" then case u of
+    Nothing -> Just embed
+    Just u' -> Just $ embed { image = notNull $ { url: u' } }
+  else if tokenType == Shuto then Just embed else Nothing
 
-buildEmbed :: StreamResponse -> Effect Embed
-buildEmbed (StreamResponse { data: Data { text }, includes: Includes { media, users } }) = do
+addMedia :: MediaItem -> TokenType -> Embed -> Maybe Embed
+addMedia (MediaItem { type: t, url: u }) tokenType embed =
+  ignoreOrNot t u tokenType embed
+                                                          
+checkImage :: Maybe (Array MediaItem) -> TokenType -> Embed -> Maybe Embed
+checkImage media tokenType embed = case media of
+  Nothing -> pred embed
+  Just m -> case m !! 0 of
+    Nothing -> pred embed
+    Just m' -> addMedia m' tokenType embed
+  where
+    pred e = if tokenType == Shuto then Just e else Nothing
+
+buildEmbed :: StreamResponse -> TokenType -> Effect (Maybe Embed)
+buildEmbed (StreamResponse { data: Data { text }, includes: Includes { media, users } }) tokenType = do
   let user = users !! 0
-  base <- baseEmbed user text
-  pure $ checkImage media base
+  embed <- baseEmbed user text
+  pure $ checkImage media tokenType embed
 
 sendEmbed :: CommandClient -> Embed -> Aff Unit
 sendEmbed client embed = do
-  channel <- liftEffect $ _getTextChannel client animeMangaChannelId
+  channel <- liftEffect $ _getTextChannel client (getChannelId Shuto)
   _ <- createChannelEmbed channel embed
   pure unit
 
-getDispatcher :: StreamResponse -> CommandClient -> Embed -> Aff Unit
-getDispatcher (StreamResponse { matching_rules: [ (MatchedItem { id }) ] }) client embed =
+getDispatcher :: TokenType -> CommandClient -> Embed -> Aff Unit
+getDispatcher tokenType client embed =
+  case tokenType of
+    Shuto -> sendEmbed client embed
+    _ -> dispatchEmbed tokenType embed
+
+getTokenType :: StreamResponse -> Effect TokenType
+getTokenType (StreamResponse { matching_rules: [ (MatchedItem { id }) ] }) = do 
   case id of
-    "1423324161796034561" -> dispatchEmbed Bakugo (embed { color = notNull bakugoColor })
-    _ -> sendEmbed client embed
-getDispatcher _ client embed = sendEmbed client embed
+    "1423324161796034561" -> pure Bakugo
+    _ -> pure Shuto
+getTokenType _ = pure Shuto
 
 handleBufferData :: Buffer -> CommandClient -> Effect Unit
 handleBufferData buffer client = do
-  s <- toString UTF8 buffer
+  s <- hackJsonString <$> toString UTF8 buffer
   if length s < 10 then pure unit
   else do
     case jsonParser s of
@@ -194,8 +224,11 @@ handleBufferData buffer client = do
           Console.error s
           Console.error $ printJsonDecodeError err
         Right response -> do
-          embed <- buildEmbed response
-          launchAff_  $ getDispatcher response client embed
+          tokenType <- getTokenType response
+          embed <- buildEmbed response tokenType
+          case embed of
+            Just e -> launchAff_  $ getDispatcher tokenType client e
+            Nothing -> pure unit
 
 handleError :: Error -> Int -> Fiber Unit -> String -> CommandClient -> Effect Unit
 handleError err retryAttempt dataFiber token client = launchAff_ do

@@ -1,12 +1,32 @@
-module Constants where
+module Constants
+  ( getChannelId
+  , getColor
+  , getStreamId
+  , getToken
+  , presences
+  , pureScriptLogo
+  , shutoPicture
+  , TokenType(..)
+  , updateDate
+  , versionNumber
+  )
+  where
 
 import Prelude
 
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Either (Either, note)
+import Data.Generic.Rep (class Generic)
+import Data.Maybe (Maybe)
+import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Node.Process (lookupEnv)
 
-data TokenType = Bakugo
+data TokenType = Shuto | Bakugo
+derive instance Eq TokenType
+derive instance Generic TokenType _
+
+instance Show TokenType where
+  show = genericShow
 
 pureScriptLogo :: String  
 pureScriptLogo = "https://cdn.discordapp.com/attachments/811517007446671391/871915061638230046/purescript-logo.png"
@@ -23,17 +43,28 @@ shutoColor = 0x1D222D
 bakugoColor :: Int
 bakugoColor = 0xE3DAC9
 
-getToken :: TokenType -> Effect String
-getToken tokenType = fromMaybe "" <$> (case tokenType of
+getToken :: TokenType -> String -> Effect (Either String String)
+getToken tokenType msg = note msg <$> (case tokenType of
+  Shuto -> shutoToken
   Bakugo -> bakugoToken)
 
 getChannelId :: TokenType -> String
 getChannelId = case _ of
+  Shuto -> animeMangaChannelId
   Bakugo -> bakugoChannelId
 
 getColor :: TokenType -> Int
 getColor = case _ of
+  Shuto -> shutoColor
   Bakugo -> bakugoColor
+
+getStreamId :: TokenType -> String
+getStreamId = case _ of
+  Shuto -> shutoStreamId
+  Bakugo -> bakugoStreamId
+
+shutoStreamId :: String
+shutoStreamId = "1422767295227596805"
 
 bakugoStreamId :: String
 bakugoStreamId = "1423324161796034561"
@@ -41,8 +72,16 @@ bakugoStreamId = "1423324161796034561"
 bakugoToken :: Effect (Maybe String)
 bakugoToken = lookupEnv "BAKUGO_TOKEN"
 
+shutoToken :: Effect (Maybe String)
+shutoToken = lookupEnv "TOKEN"
+
 bakugoChannelId :: String
 bakugoChannelId = "814879119389097995"
+--bakugoChannelId = "828429184749404220"
+
+animeMangaChannelId :: String
+animeMangaChannelId = "763568486441418774"
+--animeMangaChannelId = "828429184749404220"
 
 presences :: Array String
 presences = 

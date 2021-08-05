@@ -21,7 +21,8 @@
   "homepage": "https://github.com/deadshot465/Shuto#readme",
   "dependencies": {
     "eris": "^0.15.1",
-    "needle": "^2.8.0"
+    "needle": "^2.8.0",
+    "xhr2": "^0.2.1"
   },
   "devDependencies": {
     "@types/needle": "^2.5.2"

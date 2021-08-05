@@ -30,8 +30,9 @@ module Eris
 
 import Prelude
 
+import Constants (TokenType(..), getToken)
 import Control.Promise (Promise, toAff)
-import Data.Either (Either(..), note)
+import Data.Either (Either(..))
 import Data.Maybe (fromMaybe)
 import Data.Nullable (Nullable, null)
 import Data.String.NonEmpty (NonEmptyString)
@@ -179,7 +180,7 @@ makeEmptyEmbed =
 
 initializeClient :: Effect (Either String (Effect CommandClient))
 initializeClient = do
-  token <- note "Token cannot be empty." <$> lookupEnv "TOKEN"
+  token <- getToken Shuto "Token cannot be empty."
   prefix <- fromMaybe defaultPrefix <$> lookupEnv "PREFIX"
   let clientOptions = Right $ { defaultImageFormat: "png", defaultImageSize: 1024 }
   let commandClientOptions = Right $ { ignoreBots: true
