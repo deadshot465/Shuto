@@ -227,7 +227,7 @@ handleBufferData buffer client = do
           tokenType <- getTokenType response
           embed <- buildEmbed response tokenType
           case embed of
-            Just e -> launchAff_  $ getDispatcher tokenType client e
+            Just e -> launchAff_ $ getDispatcher tokenType client e
             Nothing -> pure unit
 
 handleError :: Error -> Int -> Fiber Unit -> String -> CommandClient -> Effect Unit

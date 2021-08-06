@@ -32,8 +32,9 @@ updatePresence client = launchAff_ $ forever do
   delay $ fromDuration $ Hours 1.0
 
 ready :: CommandClient -> Effect Unit
-ready client = launchAff_ do
-  liftEffect $ _onReady client $ updatePresence client
+ready client = do
+  _ <- _onReady client $ updatePresence client
+  pure unit
 
 main :: Effect Unit
 main = launchAff_ do
@@ -41,11 +42,11 @@ main = launchAff_ do
   result <- liftEffect $ initializeClient
   case result of
     Left err -> error err
-    Right c -> do
-      client <- liftEffect c
-      _ <- liftEffect $ _registerCommands client commands
-      _ <- liftEffect $ ready client
-      _ <- liftEffect $ _onMessageCreate client messageCreate
-      _ <- liftEffect $ startStream client
-      _ <- connectClient client
+    Right c -> liftEffect $ do
+      client <- c
+      _ <- _registerCommands client commands
+      _ <- ready client
+      _ <- _onMessageCreate client messageCreate
+      _ <- startStream client
+      let _ = connectClient client
       pure unit
