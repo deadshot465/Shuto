@@ -48,5 +48,5 @@ main = launchAff_ do
       _ <- ready client
       _ <- _onMessageCreate client messageCreate
       _ <- startStream client
-      let _ = connectClient client
+      launchAff_ $ connectClient client
       pure unit
