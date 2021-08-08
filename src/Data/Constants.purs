@@ -67,7 +67,7 @@ shutoStreamId :: String
 shutoStreamId = "1422767295227596805"
 
 bakugoStreamId :: String
-bakugoStreamId = "1423586325165264898"
+bakugoStreamId = "1424161654627962884"
 
 bakugoToken :: Effect (Maybe String)
 bakugoToken = lookupEnv "BAKUGO_TOKEN"
