@@ -1,5 +1,6 @@
 module Eris
   ( _editStatus
+  , _getMsgContent
   , _getTextChannel
   , _onMessageCreate
   , _onReady
@@ -30,16 +31,14 @@ module Eris
 
 import Prelude
 
-import Constants (TokenType(..), getToken)
+import Constants (TokenType(..), getPrefix, getToken)
 import Control.Promise (Promise, toAff)
 import Data.Either (Either(..))
-import Data.Maybe (fromMaybe)
 import Data.Nullable (Nullable, null)
 import Data.String.NonEmpty (NonEmptyString)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Node.Process (lookupEnv)
 
 foreign import _connectClient :: CommandClient -> Effect (Promise Unit)
 foreign import _createChannelEmbed :: TextChannel -> Embed -> Effect (Promise Message)
@@ -53,6 +52,7 @@ foreign import _makeClient :: Token -> ClientOptions -> CommandClientOptions -> 
 foreign import _onMessageCreate :: CommandClient -> (Message -> Effect Unit) -> Effect CommandClient
 foreign import _onReady :: CommandClient -> Effect Unit -> Effect CommandClient
 foreign import _registerCommands :: CommandClient -> Array DispatchableCommand -> Effect Unit
+foreign import _getMsgContent :: Message -> Effect String
 
 foreign import data CommandClient :: Type
 foreign import data Command :: Type
@@ -68,6 +68,7 @@ type User =
 
 type Message =
   { author :: User
+  , content :: String
   }
 
 type Embed =
@@ -153,9 +154,6 @@ createEmbed msg embed = do
   p <- liftEffect $ _createEmbed msg embed
   toAff p
 
-defaultPrefix :: String
-defaultPrefix = "sh?"
-
 editMessage :: Message -> NonEmptyString -> Aff Message
 editMessage msg str = do
   p <- liftEffect $ _editMessage msg str
@@ -181,7 +179,7 @@ makeEmptyEmbed =
 initializeClient :: Effect (Either String (Effect CommandClient))
 initializeClient = do
   token <- getToken Shuto "Token cannot be empty."
-  prefix <- fromMaybe defaultPrefix <$> lookupEnv "PREFIX"
+  prefix <- getPrefix
   let clientOptions = Right $ { defaultImageFormat: "png", defaultImageSize: 1024 }
   let commandClientOptions = Right $ { ignoreBots: true
                                      , ignoreSelf: true

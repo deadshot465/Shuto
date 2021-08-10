@@ -66,3 +66,7 @@ export const _createChannelTextMessage = (channel: TextChannel) => (content: str
 export const _createChannelEmbed = (channel: TextChannel) => (embed: EmbedOptions) => () => {
     return channel.createMessage({ embed: embed });
 };
+
+export const _getMsgContent = (msg: Message<TextChannel>) => () => {
+    return msg.content;
+};

@@ -1,6 +1,7 @@
 module Constants
   ( getChannelId
   , getColor
+  , getPrefix
   , getStreamId
   , getToken
   , presences
@@ -16,7 +17,7 @@ import Prelude
 
 import Data.Either (Either, note)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Node.Process (lookupEnv)
@@ -94,3 +95,9 @@ presences =
 
 shutoPicture :: String
 shutoPicture = "https://cdn.discordapp.com/attachments/811517007446671391/871926499161280542/hachiya.png"
+
+defaultPrefix :: String
+defaultPrefix = "sh?"
+
+getPrefix :: Effect String
+getPrefix = fromMaybe defaultPrefix <$> lookupEnv "PREFIX"
