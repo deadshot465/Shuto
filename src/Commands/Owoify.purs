@@ -30,7 +30,7 @@ owoifyImpl msg _ = fromAff $ run msg
   where
     run m@{ content } = do
       prefix <- liftEffect $ getPrefix
-      let splitIndex = length prefix + length ("owoify ")
+      let splitIndex = length prefix + length "owoify "https://www.covid19-yamanaka.com/cont5/72.html
       let { after } = splitAt splitIndex content
       result <- liftEffect $ Owoify.owoify after Owoify.Uvu
       _ <- createTextMessage m $ NonEmptyString result
