@@ -33,10 +33,10 @@ pureScriptLogo :: String
 pureScriptLogo = "https://cdn.discordapp.com/attachments/811517007446671391/871915061638230046/purescript-logo.png"
 
 versionNumber :: String
-versionNumber = "1.0.0"
+versionNumber = "1.2.0"
 
 updateDate :: String
-updateDate = "2021-08-03"
+updateDate = "2021-08-22"
 
 shutoColor :: Int
 shutoColor = 0x1D222D
