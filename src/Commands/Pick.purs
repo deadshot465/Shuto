@@ -4,6 +4,7 @@ import Prelude
 
 import Control.Promise (Promise, fromAff)
 import Data.Array (drop, filter, length, mapWithIndex, reverse, snoc, sortBy, uncons, (!!))
+import Data.Array as Array
 import Data.Foldable (intercalate)
 import Data.Int (fromString)
 import Data.Map (Map)
@@ -38,22 +39,27 @@ pickImpl msg args = fromAff $ run msg args
     remainingOptions :: Array String -> String
     remainingOptions = intercalate ""
 
+    run :: Message -> Array String -> Aff (Nullable Unit)
     run m@{ author: { mention } } args' = do
-      let { head: times, tail } = fromMaybe { head: "", tail: [] } $ uncons args'
-      let actualTimes = tryParseTimes times
-      let options = remainingOptions tail
-      result <- case actualTimes of
-                  Nothing -> singlePick mention $ times <> " | " <> options
-                  Just actualTimes' -> do
-                    -- Try to extract options if there are options inside the times part.
-                    -- E.g. 5000times|A|B|C
-                    let trimmedOptions = extractOptions times options
-                    if trimmedOptions == times then
-                      singlePick mention trimmedOptions
-                    else
-                      multiplePick mention actualTimes' trimmedOptions
-      _ <- createTextMessage m $ NonEmptyString result
-      pure null
+      if Array.null args' then do
+        _ <- createTextMessage m $ NonEmptyString emptyMsg
+        pure null
+      else do
+        let { head: times, tail } = fromMaybe { head: "", tail: [] } $ uncons args'
+        let actualTimes = tryParseTimes times
+        let options = remainingOptions tail
+        result <- case actualTimes of
+                    Nothing -> singlePick mention $ times <> " | " <> options
+                    Just actualTimes' -> do
+                      -- Try to extract options if there are options inside the times part.
+                      -- E.g. 5000times|A|B|C
+                      let trimmedOptions = extractOptions times options
+                      if trimmedOptions == times then
+                        singlePick mention trimmedOptions
+                      else
+                        multiplePick mention actualTimes' trimmedOptions
+        _ <- createTextMessage m $ NonEmptyString result
+        pure null
 
 description :: String
 description = "様々な選択肢に迷っている時、八谷に頼んで、八谷に選んでもらう。"
