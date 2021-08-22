@@ -24,6 +24,7 @@ to generate this file without the comments in this block.
   , "dotenv"
   , "effect"
   , "either"
+  , "foldable-traversable"
   , "foreign-generic"
   , "http-methods"
   , "integers"
@@ -36,6 +37,7 @@ to generate this file without the comments in this block.
   , "node-streams"
   , "now"
   , "nullable"
+  , "ordered-collections"
   , "owoify"
   , "prelude"
   , "psci-support"
@@ -43,6 +45,7 @@ to generate this file without the comments in this block.
   , "strings"
   , "tailrec"
   , "transformers"
+  , "tuples"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

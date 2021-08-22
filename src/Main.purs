@@ -16,12 +16,13 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console (error)
 import Eris (CommandClient, DispatchableCommand, Message, _editStatus, _onMessageCreate, _onReady, _registerCommands, connectClient, initializeClient)
 import Owoify (owoify)
+import Pick (pick)
 import Ping (ping)
 import TwitterStream (startStream)
 import Utility (randomAff)
 
 commands :: Array DispatchableCommand
-commands = [ping, about, owoify]
+commands = [ping, about, owoify, pick]
 
 messageCreate :: Message -> Effect Unit
 messageCreate _ = pure unit

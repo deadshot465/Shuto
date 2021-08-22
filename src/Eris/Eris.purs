@@ -64,6 +64,7 @@ type ChannelId = String
 
 type User = 
   { bot :: Boolean
+  , mention :: String
   }
 
 type Message =

@@ -12,3 +12,5 @@
 **/*/*.js
 **/*/*.js.map
 error.txt
+.DS_Store
+**/*/.DS_Store
