@@ -218,7 +218,7 @@ handleBufferData buffer client = do
   if length s < 10 then pure unit
   else do
     case jsonParser s of
-      Left err -> Console.error $ "Failed to parse string to Json: " <> err
+      Left err -> Console.error $ "Failed to parse string to Json: " <> err <> "\nOriginal String: " <> s
       Right json -> case (decodeJson json :: _ StreamResponse) of
         Left err -> do
           Console.error s
