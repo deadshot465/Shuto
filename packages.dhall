@@ -99,32 +99,6 @@ in  upstream
 -------------------------------
 -}
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.14.3-20210825/packages.dhall sha256:eee0765aa98e0da8fc414768870ad588e7cada060f9f7c23c37385c169f74d9f
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.4-20210919/packages.dhall sha256:03516fdd4f6d1bd6c9eb5e63cf3af3037bc079459117ab93eb85b6eb46e258a7
 
 in  upstream
-  {- with owoify =
-    { dependencies =
-      [ "aff"
-      , "arrays"
-      , "assert"
-      , "bifunctors"
-      , "console"
-      , "effect"
-      , "either"
-      , "foldable-traversable"
-      , "integers"
-      , "lists"
-      , "maybe"
-      , "node-buffer"
-      , "node-fs-aff"
-      , "prelude"
-      , "psci-support"
-      , "random"
-      , "strings"
-      , "transformers"
-      , "tuples"
-      , "unfoldable"
-      ]
-    , repo = "https://github.com/deadshot465/purescript-owoify"
-    , version = "main"
-    } -}
