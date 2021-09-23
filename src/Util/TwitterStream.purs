@@ -214,7 +214,7 @@ getTokenType _ = pure Shuto
 
 handleBufferData :: Buffer -> CommandClient -> Effect Unit
 handleBufferData buffer client = do
-  s <- hackJsonString <$> toString UTF8 buffer
+  s <- toString UTF8 buffer
   if length s < 10 then pure unit
   else do
     case jsonParser s of
